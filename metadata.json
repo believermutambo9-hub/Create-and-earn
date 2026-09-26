@@ -1,0 +1,9 @@
+{
+  "name": "CREATE & EARN",
+  "description": "Premium creator platform for African creators to create ideas, scripts, scenes, connect with brand opportunities, and monetize content.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
+
