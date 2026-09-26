@@ -21,6 +21,7 @@ export interface CreatorProfile {
   id: string;
   name: string;
   username: string;
+  email?: string;
   avatar: string;
   bio: string;
   category: string;
@@ -34,6 +35,9 @@ export interface CreatorProfile {
   availableBalance: number;
   pendingBalance: number;
   isVerified: boolean;
+  role?: Role;
+  mobileMoneyNumber?: string;
+  mobileMoneyProvider?: string;
   services: {
     id: string;
     title: string;
@@ -64,6 +68,7 @@ export interface BusinessProfile {
 
 export interface Project {
   id: string;
+  userId?: string;
   title: string;
   type: 'script' | 'idea' | 'scene' | 'caption';
   category: string;
@@ -114,6 +119,7 @@ export interface SceneShot {
 
 export interface Opportunity {
   id: string;
+  businessId?: string;
   businessName: string;
   businessLogo: string;
   title: string;
@@ -128,35 +134,62 @@ export interface Opportunity {
   isSaved?: boolean;
   hasApplied?: boolean;
   featured?: boolean;
+  status?: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  selectedCreatorId?: string;
+  selectedCreatorName?: string;
+}
+
+export interface Application {
+  id: string;
+  opportunityId: string;
+  opportunityTitle: string;
+  businessId?: string;
+  businessName: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string;
+  creatorCategory?: string;
+  pitch: string;
+  portfolioUrl?: string;
+  proposedFee: number;
+  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  createdAt: string;
 }
 
 export interface Message {
   id: string;
+  threadId?: string;
   senderId: string;
   senderName: string;
   senderAvatar: string;
+  senderRole?: 'creator' | 'business' | 'admin';
   receiverId: string;
   text: string;
   timestamp: string;
   isOffer?: boolean;
   offerAmount?: number;
+  offerStatus?: 'pending' | 'accepted' | 'declined';
   projectRef?: string;
   isRead: boolean;
 }
 
 export interface Transaction {
   id: string;
+  userId?: string;
   title: string;
   businessOrClient: string;
   amount: number;
-  type: 'payout' | 'deposit' | 'withdrawal';
-  method: 'Airtel Money' | 'MTN MoMo' | 'Bank Transfer';
+  type: 'payout' | 'deposit' | 'withdrawal' | 'escrow_lock' | 'escrow_release';
+  method: 'Airtel Money' | 'MTN MoMo' | 'Zamtel Kwacha' | 'Bank Transfer';
+  phone?: string;
+  reference?: string;
   date: string;
-  status: 'Completed' | 'Pending' | 'Processing';
+  status: 'Completed' | 'Pending' | 'Processing' | 'Failed';
 }
 
 export interface AppNotification {
   id: string;
+  userId?: string;
   title: string;
   message: string;
   time: string;

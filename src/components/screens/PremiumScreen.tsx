@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
 import { Crown, Check, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import { PaymentCheckoutModal } from '../modals/PaymentCheckoutModal';
 
 interface PremiumScreenProps {
-  onSubscribe: (plan: string) => void;
+  onSubscribe: (plan: string, details?: { method: string; amount: number; reference: string; phone: string }) => void;
   onBack: () => void;
+  userEmail?: string;
+  userName?: string;
 }
 
-export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBack }) => {
+export const PremiumScreen: React.FC<PremiumScreenProps> = ({ 
+  onSubscribe, 
+  onBack,
+  userEmail = 'creator@createearn.com',
+  userName = 'Creator'
+}) => {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutData, setCheckoutData] = useState<{ plan: 'monthly' | 'yearly'; amount: number; title: string }>({
+    plan: 'yearly',
+    amount: 399,
+    title: 'CREATE & EARN PRO (Yearly)',
+  });
   const [subscribedNotice, setSubscribedNotice] = useState(false);
 
   const perks = [
@@ -20,14 +34,22 @@ export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBac
     'Direct business VIP messaging inbox',
   ];
 
-  const handleSubscribe = (plan: 'monthly' | 'yearly') => {
+  const handleOpenCheckout = (plan: 'monthly' | 'yearly') => {
     setSelectedPlan(plan);
+    const amount = plan === 'monthly' ? 49 : 399;
+    const title = plan === 'monthly' ? 'PRO Creator Monthly (K49/mo)' : 'PRO Creator Yearly (K399/yr - Save 40%)';
+    setCheckoutData({ plan, amount, title });
+    setShowCheckoutModal(true);
+  };
+
+  const handleCheckoutSuccess = (details: { method: any; amount: number; reference: string; phone: string }) => {
+    setShowCheckoutModal(false);
     setSubscribedNotice(true);
-    onSubscribe(plan);
+    onSubscribe(checkoutData.plan, details);
     setTimeout(() => {
       setSubscribedNotice(false);
       onBack();
-    }, 1800);
+    }, 2000);
   };
 
   return (
@@ -35,7 +57,7 @@ export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBac
       {/* Background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#FFB800]/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Header matching frame 9 in screenshot */}
+      {/* Header */}
       <div className="flex flex-col items-center text-center pt-2">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FFB800] via-amber-400 to-yellow-200 flex items-center justify-center shadow-xl shadow-amber-500/20 mb-3">
           <Crown className="w-8 h-8 text-black fill-black" />
@@ -59,7 +81,7 @@ export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBac
         </div>
       ) : (
         <div className="space-y-3.5">
-          {/* Monthly Card matching screenshot */}
+          {/* Monthly Card */}
           <div
             onClick={() => setSelectedPlan('monthly')}
             className={`p-4 rounded-3xl border transition-all cursor-pointer relative shadow-lg ${
@@ -83,15 +105,15 @@ export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBac
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleSubscribe('monthly');
+                handleOpenCheckout('monthly');
               }}
               className="w-full py-3 bg-[#FFB800] hover:bg-[#FFA500] text-black font-extrabold text-xs rounded-xl shadow-md shadow-amber-500/25 active:scale-95 transition-all"
             >
-              Subscribe Monthly
+              Subscribe Monthly (K49)
             </button>
           </div>
 
-          {/* Yearly Card matching screenshot (Highlighted Save 40%) */}
+          {/* Yearly Card (Highlighted Save 40%) */}
           <div
             onClick={() => setSelectedPlan('yearly')}
             className={`p-4 rounded-3xl border transition-all cursor-pointer relative shadow-xl ${
@@ -120,15 +142,15 @@ export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBac
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleSubscribe('yearly');
+                handleOpenCheckout('yearly');
               }}
               className="w-full py-3 bg-[#FFB800] hover:bg-[#FFA500] text-black font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/30 active:scale-95 transition-all"
             >
-              Subscribe Yearly (Best Value)
+              Subscribe Yearly (Best Value - K399)
             </button>
           </div>
 
-          {/* Feature Checklist matching frame 9 */}
+          {/* Feature Checklist */}
           <div className="bg-[#121824] rounded-3xl border border-[#212C41] p-4 space-y-2.5">
             <h4 className="text-xs font-black uppercase tracking-wider text-gray-300 mb-1">
               Included in PRO:
@@ -144,6 +166,18 @@ export const PremiumScreen: React.FC<PremiumScreenProps> = ({ onSubscribe, onBac
           </div>
         </div>
       )}
+
+      {/* Interactive Payment Checkout Modal */}
+      <PaymentCheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        plan={checkoutData.plan}
+        amount={checkoutData.amount}
+        title={checkoutData.title}
+        userEmail={userEmail}
+        userName={userName}
+        onPaymentSuccess={handleCheckoutSuccess}
+      />
     </div>
   );
 };

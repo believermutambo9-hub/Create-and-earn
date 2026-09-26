@@ -5,12 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>CREATE & EARN - Create. Connect. Earn.</title>
     <meta name="description" content="Premium creator platform for African creators to create ideas, scripts, scenes, connect with brand opportunities, and monetize content." />
+    <script>
+      (function() {
+        const isMutedNotice = function(arg) {
+          if (!arg) return false;
+          const msg = typeof arg === 'string' ? arg : (arg.message || String(arg));
+          return msg.includes('[vite]') || 
+                 msg.includes('WebSocket') || 
+                 msg.includes('connecting...') ||
+                 msg.includes('auth/popup-closed-by-user') ||
+                 msg.includes('auth/cancelled-popup-request');
+        };
+        const origError = console.error;
+        console.error = function(...args) {
+          if (args.some(isMutedNotice)) return;
+          origError.apply(console, args);
+        };
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+          if (args.some(isMutedNotice)) return;
+          origWarn.apply(console, args);
+        };
+        const origLog = console.log;
+        console.log = function(...args) {
+          if (args.some(isMutedNotice)) return;
+          origLog.apply(console, args);
+        };
+        window.addEventListener('error', function(event) {
+          if (event.message && isMutedNotice(event.message)) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+          }
+        }, true);
+      })();
+    </script>
     <meta property="og:title" content="CREATE & EARN - Create. Connect. Earn." />
     <meta property="og:description" content="Premium creator platform for African creators to create ideas, scripts, scenes, connect with brand opportunities, and monetize content." />
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0B0E14" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Create&Earn" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -15,15 +15,22 @@ import {
   CreditCard,
   Bell,
   HelpCircle,
-  FileText
+  FileText,
+  Smartphone,
+  Download
 } from 'lucide-react';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { CreatorProfile, Screen } from '../../types';
+import { EditProfileModal } from '../modals/EditProfileModal';
 
 interface CreatorProfileScreenProps {
   user: CreatorProfile;
   onNavigate: (screen: Screen) => void;
   onContact: () => void;
   onUpdateBio?: (newBio: string) => void;
+  onSaveProfile?: (updated: Partial<CreatorProfile>) => Promise<void>;
+  onLogOut?: () => void;
+  onOpenAuth?: (mode?: 'signin' | 'signup') => void;
 }
 
 export const CreatorProfileScreen: React.FC<CreatorProfileScreenProps> = ({
@@ -31,11 +38,26 @@ export const CreatorProfileScreen: React.FC<CreatorProfileScreenProps> = ({
   onNavigate,
   onContact,
   onUpdateBio,
+  onSaveProfile,
+  onLogOut,
+  onOpenAuth,
 }) => {
   const [activeTab, setActiveTab] = useState<'portfolio' | 'services' | 'settings'>('portfolio');
   const [isEditingBio, setIsEditingBio] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [bioInput, setBioInput] = useState(user.bio);
   const [isCopied, setIsCopied] = useState(false);
+
+  const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+
+  const handleInstallApp = async () => {
+    if (isInstallable) {
+      await install();
+    } else {
+      setShowInstallGuide(true);
+    }
+  };
 
   const handleShareProfile = () => {
     navigator.clipboard.writeText(`https://createandearn.africa/creator/${user.username.replace('@', '')}`);
@@ -318,14 +340,36 @@ export const CreatorProfileScreen: React.FC<CreatorProfileScreenProps> = ({
         /* Settings List required by prompt */
         <div className="bg-[#121824] rounded-3xl border border-[#202C40] p-2 divide-y divide-[#1A2335] text-xs">
           {[
-            { icon: Edit3, label: 'Edit Profile & Links' },
+            { 
+              icon: Smartphone, 
+              label: isInstalled ? 'Mobile App Installed (PWA)' : 'Install App on Phone (PWA)', 
+              badge: isInstalled ? 'Active' : 'Get App',
+              action: handleInstallApp 
+            },
+            { 
+              icon: Edit3, 
+              label: 'Edit Profile & Links',
+              action: () => setIsEditProfileOpen(true) 
+            },
             { icon: Bell, label: 'Notifications & Alerts' },
             { icon: Shield, label: 'Privacy & Security' },
-            { icon: CreditCard, label: 'Payment Settings (Mobile Money)' },
+            { 
+              icon: CreditCard, 
+              label: 'Payment Settings (Mobile Money)',
+              badge: user.mobileMoneyProvider || 'Airtel Money',
+              action: () => setIsEditProfileOpen(true)
+            },
             { icon: Crown, label: 'PRO Creator Subscription', action: () => onNavigate('premium') },
             { icon: HelpCircle, label: 'Help & Support Desk' },
             { icon: FileText, label: 'Terms & Privacy Policy' },
-            { icon: LogOut, label: 'Log Out', danger: true },
+            { 
+              icon: LogOut, 
+              label: 'Log Out', 
+              danger: true,
+              action: () => {
+                if (onLogOut) onLogOut();
+              }
+            },
           ].map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -342,12 +386,61 @@ export const CreatorProfileScreen: React.FC<CreatorProfileScreenProps> = ({
                   <Icon className="w-4 h-4 opacity-80" />
                   <span className="font-semibold">{item.label}</span>
                 </div>
-                <span className="text-gray-500">›</span>
+                <div className="flex items-center space-x-2">
+                  {item.badge && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#FFB800]/20 text-[#FFB800] border border-[#FFB800]/30">
+                      {item.badge}
+                    </span>
+                  )}
+                  <span className="text-gray-500">›</span>
+                </div>
               </button>
             );
           })}
         </div>
       )}
+
+      {showInstallGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-[#121824] border border-[#232D42] rounded-3xl p-5 shadow-2xl">
+            <h3 className="font-bold text-sm text-white flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-[#FFB800]" />
+              Install on Your Phone
+            </h3>
+            <p className="text-xs text-gray-400 mt-2">
+              To install CREATE & EARN directly onto your home screen:
+            </p>
+            <ul className="mt-3 space-y-2 text-xs text-gray-300">
+              <li className="flex items-start gap-2">
+                <span className="text-[#FFB800] font-bold">1.</span>
+                <span>On iPhone Safari: Tap the <strong>Share</strong> button and choose <strong>Add to Home Screen</strong>.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#FFB800] font-bold">2.</span>
+                <span>On Android Chrome: Tap the <strong>three dots menu (⋮)</strong> and tap <strong>Install App</strong> or <strong>Add to Home screen</strong>.</span>
+              </li>
+            </ul>
+            <button
+              onClick={() => setShowInstallGuide(false)}
+              className="mt-4 w-full py-2 bg-[#FFB800] text-black font-bold rounded-xl text-xs"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Real Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditProfileOpen}
+        user={user}
+        onClose={() => setIsEditProfileOpen(false)}
+        onSave={async (updated) => {
+          if (onSaveProfile) {
+            await onSaveProfile(updated);
+          }
+        }}
+      />
     </div>
   );
 };

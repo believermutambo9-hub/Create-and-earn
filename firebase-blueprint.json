@@ -1,0 +1,176 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role, creator details or business details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "username": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 120 },
+        "avatar": { "type": "string", "maxLength": 500 },
+        "role": { "type": "string", "enum": ["creator", "business", "admin"] },
+        "bio": { "type": "string", "maxLength": 500 },
+        "category": { "type": "string", "maxLength": 100 },
+        "location": { "type": "string", "maxLength": 100 },
+        "countryFlag": { "type": "string", "maxLength": 10 },
+        "followers": { "type": "number" },
+        "rating": { "type": "number" },
+        "availableBalance": { "type": "number" },
+        "pendingBalance": { "type": "number" },
+        "totalEarnings": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "mobileMoneyNumber": { "type": "string", "maxLength": 30 },
+        "mobileMoneyProvider": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "role"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Creator project (idea, script, scene breakdown, caption)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "type": { "type": "string", "enum": ["script", "idea", "scene", "caption"] },
+        "category": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["Draft", "Ready", "In Production", "Completed"] },
+        "summary": { "type": "string", "maxLength": 2000 },
+        "thumbnail": { "type": "string", "maxLength": 500 },
+        "content": { "type": "object" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "type", "category"]
+    },
+    "Opportunity": {
+      "title": "Opportunity",
+      "description": "Brand campaigns with budget in Zambian Kwacha",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "businessId": { "type": "string" },
+        "businessName": { "type": "string", "maxLength": 100 },
+        "businessLogo": { "type": "string", "maxLength": 500 },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "category": { "type": "string", "maxLength": 100 },
+        "budget": { "type": "number" },
+        "deadline": { "type": "string", "maxLength": 50 },
+        "location": { "type": "string", "maxLength": 100 },
+        "creatorRequirements": { "type": "string", "maxLength": 1000 },
+        "spotsAvailable": { "type": "number" },
+        "applicantsCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "in_progress", "completed", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "businessName", "title", "budget"]
+    },
+    "Application": {
+      "title": "Application",
+      "description": "Creator pitch application for brand opportunities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "opportunityId": { "type": "string" },
+        "opportunityTitle": { "type": "string", "maxLength": 200 },
+        "businessId": { "type": "string" },
+        "businessName": { "type": "string", "maxLength": 100 },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string", "maxLength": 100 },
+        "creatorAvatar": { "type": "string", "maxLength": 500 },
+        "pitch": { "type": "string", "maxLength": 2000 },
+        "portfolioUrl": { "type": "string", "maxLength": 500 },
+        "proposedFee": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected", "completed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "opportunityId", "creatorId", "pitch"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct message and deal negotiations between creators and businesses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "threadId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "senderAvatar": { "type": "string", "maxLength": 500 },
+        "senderRole": { "type": "string", "enum": ["creator", "business", "admin", "system"] },
+        "recipientId": { "type": "string" },
+        "recipientName": { "type": "string", "maxLength": 100 },
+        "content": { "type": "string", "maxLength": 2000 },
+        "offerAmount": { "type": "number" },
+        "offerStatus": { "type": "string", "enum": ["none", "pending", "accepted", "declined"] },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "threadId", "senderId", "content"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Payout, withdrawal or escrow record with provider reference",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["payout", "deposit", "withdrawal", "escrow_lock", "escrow_release"] },
+        "method": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "reference": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["Completed", "Pending", "Processing", "Failed"] },
+        "date": { "type": "string" }
+      },
+      "required": ["id", "userId", "amount", "type", "method"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "time": { "type": "string" },
+        "type": { "type": "string" },
+        "isRead": { "type": "boolean" }
+      },
+      "required": ["id", "userId", "title", "message"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles collection"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Creator projects collection"
+    },
+    "/opportunities/{opportunityId}": {
+      "schema": "Opportunity",
+      "description": "Marketplace brand campaigns"
+    },
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Creator job applications"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Creator-Business direct chat and offers"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions and payouts"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    }
+  }
+}

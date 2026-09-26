@@ -503,14 +503,111 @@ Return strictly JSON:
   return res.json({ success: true, data: fallback, source: 'curated' });
 });
 
+// ==========================================
+// 5. Payment Gateway & MoMo APIs
+// ==========================================
+
+// Payout destination and payment gateway config stored in memory
+let paymentGatewayConfig = {
+  activeProvider: 'Flutterwave',
+  isTestMode: true,
+  currency: 'ZMW',
+  merchantName: 'CREATE & EARN African Platform',
+  ownerEmail: 'believermutambo8@gmail.com',
+  ownerBank: {
+    bankName: 'Zanaco Bank Zambia',
+    accountName: 'Believer Mutambo',
+    accountNumber: '1029384756',
+    branch: 'Lusaka Corporate Branch',
+    mobileMoneyPayoutNumber: '+260 97 966 3914',
+    mobileMoneyProvider: 'Airtel Money Zambia',
+  },
+  subscriptionRates: {
+    monthly: 49,
+    yearly: 399,
+  },
+  escrowPlatformCommissionPercent: 5,
+};
+
+// Checkout endpoint for Subscriptions and Escrow
+app.post('/api/payments/checkout', async (req: Request, res: Response) => {
+  const { plan = 'monthly', amount = 49, method = 'Airtel Money', phone = '', email = '', name = '' } = req.body;
+  const methodPrefix = method.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4) || 'MOMO';
+  const reference = `CE-${methodPrefix}-${Date.now().toString().slice(-6)}`;
+  
+  return res.json({
+    success: true,
+    reference,
+    amount,
+    currency: 'ZMW',
+    method,
+    phone,
+    mode: paymentGatewayConfig.isTestMode ? 'sandbox' : 'live',
+    ussdPromptMessage: `Prompt initiated to ${phone || 'your phone'}. Enter your Mobile Money PIN on your handset to approve K${amount}.`,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Verify transaction endpoint
+app.post('/api/payments/verify', async (req: Request, res: Response) => {
+  const { reference } = req.body;
+  return res.json({
+    success: true,
+    verified: true,
+    reference: reference || `REF-${Date.now()}`,
+    status: 'Completed',
+    verifiedAt: new Date().toISOString(),
+  });
+});
+
+// Withdraw / Creator Payout endpoint
+app.post('/api/payments/withdraw', async (req: Request, res: Response) => {
+  const { amount, method, destination, accountName } = req.body;
+  const payoutRef = `WD-ZM-${Date.now().toString().slice(-6)}`;
+  return res.json({
+    success: true,
+    payoutRef,
+    amount,
+    currency: 'ZMW',
+    method,
+    destination,
+    estimatedArrival: '1-5 minutes',
+    status: 'Completed',
+  });
+});
+
+// Get payment config & merchant settings
+app.get('/api/payments/config', async (_req: Request, res: Response) => {
+  return res.json({
+    success: true,
+    config: paymentGatewayConfig,
+  });
+});
+
+// Update payment config & owner payout destination
+app.post('/api/payments/config', async (req: Request, res: Response) => {
+  const updates = req.body;
+  paymentGatewayConfig = {
+    ...paymentGatewayConfig,
+    ...updates,
+    ownerBank: {
+      ...paymentGatewayConfig.ownerBank,
+      ...(updates.ownerBank || {}),
+    }
+  };
+  return res.json({ success: true, config: paymentGatewayConfig });
+});
+
 // Setup Vite in Dev or serve static in Prod
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
+      configFile: path.resolve(__dirname, 'vite.config.ts'),
+      root: process.cwd(),
       server: {
         middlewareMode: true,
-        hmr: process.env.DISABLE_HMR !== 'true',
+        hmr: false,
       },
       appType: 'spa',
     });

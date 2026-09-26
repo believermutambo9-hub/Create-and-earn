@@ -12,47 +12,42 @@ import {
   Sparkles, 
   CheckCircle2, 
   Building2, 
-  Users 
+  Users,
+  CheckCheck,
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
-import { Opportunity, Role } from '../../types';
+import { Opportunity, Application, Role } from '../../types';
 
 interface OpportunitiesScreenProps {
   opportunities: Opportunity[];
+  applications?: Application[];
   activeRole: Role;
-  onApply: (opportunityId: string, pitchData: any) => void;
+  onApply: (opportunity: Opportunity) => void;
   onSaveOpportunity: (opportunityId: string) => void;
-  onPostCampaign: (campaignData: Partial<Opportunity>) => void;
+  onPostCampaign: () => void;
   onSelectBusiness: (businessName: string) => void;
+  onAcceptApplication?: (app: Application) => Promise<void>;
+  onCompleteJob?: (app: Application) => Promise<void>;
 }
 
 export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
   opportunities,
+  applications = [],
   activeRole,
   onApply,
   onSaveOpportunity,
   onPostCampaign,
   onSelectBusiness,
+  onAcceptApplication,
+  onCompleteJob,
 }) => {
-  const [activeTab, setActiveTab] = useState<'browse' | 'saved' | 'my-applications' | 'post-campaign'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'saved' | 'my-applications' | 'applicants'>('browse');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  
-  // Apply Modal State
-  const [applyingOpportunity, setApplyingOpportunity] = useState<Opportunity | null>(null);
-  const [pitchText, setPitchText] = useState('I specialize in viral Lusaka relatable comedy skits. I have 15M+ views and can turn this campaign into an instant high-retention TikTok & Reels video with top audio quality.');
-  const [deliveryDays, setDeliveryDays] = useState('3 days');
-  const [submittedApp, setSubmittedApp] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Business Post Campaign State
-  const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState('Food & Beverage');
-  const [newBudget, setNewBudget] = useState('1200');
-  const [newDeadline, setNewDeadline] = useState('7 days left');
-  const [newDescription, setNewDescription] = useState('');
-  const [newLocation, setNewLocation] = useState('Lusaka, Zambia');
-  const [campaignPostedNotice, setCampaignPostedNotice] = useState(false);
-
-  const categories = ['All', 'Food & Beverage', 'Fintech & Apps', 'Beauty & Lifestyle', 'Fitness & Health', 'Zambian Brands 🇿🇲'];
+  const categories = ['All', 'Comedy', 'Food & Dining', 'Love & Relationships', 'Acting', 'Music & Dance', 'Business'];
 
   const filteredOpportunities = opportunities.filter((opp) => {
     const matchesSearch = 
@@ -61,8 +56,7 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
       opp.description.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCat = 
-      selectedCategory === 'All' || 
-      (selectedCategory === 'Zambian Brands 🇿🇲' ? opp.location.includes('Zambia') : opp.category === selectedCategory);
+      selectedCategory === 'All' || opp.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
     if (activeTab === 'saved') {
       return matchesSearch && matchesCat && opp.isSaved;
@@ -74,50 +68,29 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
     return matchesSearch && matchesCat;
   });
 
-  const handleConfirmApply = () => {
-    if (!applyingOpportunity) return;
-    onApply(applyingOpportunity.id, {
-      pitch: pitchText,
-      deliveryDays,
-    });
-    setSubmittedApp(true);
-    setTimeout(() => {
-      setSubmittedApp(false);
-      setApplyingOpportunity(null);
-    }, 1800);
+  const handleHire = async (app: Application) => {
+    if (!onAcceptApplication) return;
+    setActionLoading(app.id);
+    try {
+      await onAcceptApplication(app);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleCreateCampaign = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle || !newDescription) return;
-
-    onPostCampaign({
-      title: newTitle,
-      businessName: 'Hungry Lion Lusaka',
-      businessLogo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80',
-      category: newCategory,
-      budget: parseInt(newBudget, 10) || 500,
-      deadline: newDeadline,
-      location: newLocation,
-      description: newDescription,
-      requirements: ['High video resolution', 'Authentic comedy', 'Brand tag in description'],
-      spotsAvailable: 2,
-      applicantsCount: 0,
-      featured: true
-    });
-
-    setCampaignPostedNotice(true);
-    setTimeout(() => {
-      setCampaignPostedNotice(false);
-      setActiveTab('browse');
-      setNewTitle('');
-      setNewDescription('');
-    }, 1500);
+  const handleComplete = async (app: Application) => {
+    if (!onCompleteJob) return;
+    setActionLoading(app.id);
+    try {
+      await onCompleteJob(app);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
     <div className="flex-1 flex flex-col p-4 space-y-4 pb-24">
-      {/* Title */}
+      {/* Title & Actions */}
       <div className="flex items-center justify-between">
         <div>
           <div className="inline-flex items-center space-x-1 text-[#FFB800] text-xs font-bold mb-0.5">
@@ -128,29 +101,25 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
             Brand Opportunities
           </h2>
           <p className="text-xs text-gray-400">
-            Get paid in Zambian Kwacha (K) to create skits, reviews & video ads.
+            Get paid in Zambian Kwacha (K) with verified Escrow protection.
           </p>
         </div>
 
-        {/* Post Campaign Button for businesses or creators */}
+        {/* Post Campaign Button */}
         <button
-          onClick={() => setActiveTab(activeTab === 'post-campaign' ? 'browse' : 'post-campaign')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all ${
-            activeTab === 'post-campaign'
-              ? 'bg-[#3B82F6] text-white shadow-md'
-              : 'bg-[#182030] text-gray-300 hover:text-white border border-[#2B3954]'
-          }`}
+          onClick={onPostCampaign}
+          className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white shadow-md transition-all active:scale-95"
         >
           <PlusCircle className="w-4 h-4 text-[#FFB800]" />
-          <span>{activeTab === 'post-campaign' ? 'Browse' : 'Post Deal'}</span>
+          <span>Post Deal</span>
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="bg-[#121824] p-1.5 rounded-2xl border border-[#222E42] flex items-center space-x-1">
+      <div className="bg-[#121824] p-1.5 rounded-2xl border border-[#222E42] flex items-center space-x-1 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('browse')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 min-w-[75px] py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'browse'
               ? 'bg-[#FFB800] text-black shadow-md shadow-amber-500/20'
               : 'text-gray-400 hover:text-white'
@@ -161,7 +130,7 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
 
         <button
           onClick={() => setActiveTab('saved')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 min-w-[75px] py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'saved'
               ? 'bg-[#FFB800] text-black shadow-md shadow-amber-500/20'
               : 'text-gray-400 hover:text-white'
@@ -172,7 +141,7 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
 
         <button
           onClick={() => setActiveTab('my-applications')}
-          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+          className={`flex-1 min-w-[75px] py-2 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'my-applications'
               ? 'bg-[#FFB800] text-black shadow-md shadow-amber-500/20'
               : 'text-gray-400 hover:text-white'
@@ -180,107 +149,128 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
         >
           Applied ({opportunities.filter((o) => o.hasApplied).length})
         </button>
+
+        {activeRole === 'business' && (
+          <button
+            onClick={() => setActiveTab('applicants')}
+            className={`flex-1 min-w-[100px] py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'applicants'
+                ? 'bg-[#3B82F6] text-white shadow-md'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Review ({applications.length})
+          </button>
+        )}
       </div>
 
-      {activeTab === 'post-campaign' ? (
-        /* Business Post Campaign Form */
-        <div className="bg-[#121824] rounded-3xl border border-[#222E43] p-5 space-y-4 shadow-xl">
-          <div className="flex items-center space-x-2 border-b border-[#1C2538] pb-3">
-            <Building2 className="w-5 h-5 text-[#3B82F6]" />
-            <div>
-              <h3 className="text-sm font-bold text-white">Post Brand Campaign</h3>
-              <p className="text-[11px] text-gray-400">Reach 15,000+ talented African creators</p>
-            </div>
+      {activeTab === 'applicants' ? (
+        /* Business Reviewing Creator Applicants */
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+              Incoming Creator Proposals ({applications.length})
+            </h3>
+            <span className="text-[11px] text-[#3B82F6] font-semibold">
+              Select creator to fund Escrow
+            </span>
           </div>
 
-          {campaignPostedNotice ? (
-            <div className="p-6 text-center space-y-2 bg-[#10B981]/15 rounded-2xl border border-[#10B981]/40">
-              <CheckCircle2 className="w-8 h-8 text-[#10B981] mx-auto" />
-              <h4 className="text-sm font-black text-white">Campaign Live on Marketplace!</h4>
-              <p className="text-xs text-gray-300">Creators can now submit video pitches for your review.</p>
+          {applications.length === 0 ? (
+            <div className="py-12 text-center bg-[#121824] rounded-3xl border border-[#202C3F] p-6 space-y-2">
+              <Users className="w-10 h-10 text-gray-500 mx-auto" />
+              <h4 className="text-sm font-bold text-white">No applications yet</h4>
+              <p className="text-xs text-gray-400">
+                Creators will appear here as soon as they submit pitches for your campaigns.
+              </p>
             </div>
           ) : (
-            <form onSubmit={handleCreateCampaign} className="space-y-3 text-xs">
-              <div>
-                <label className="text-gray-300 font-bold block mb-1">Campaign Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Hilarious Restaurant Skit for New Chicken Wings"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-[#182030] border border-[#2B3954] rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#FFB800]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-gray-300 font-bold block mb-1">Category</label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full bg-[#182030] border border-[#2B3954] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#FFB800]"
-                  >
-                    <option value="Food & Beverage">Food & Beverage</option>
-                    <option value="Fintech & Apps">Fintech & Apps</option>
-                    <option value="Beauty & Lifestyle">Beauty & Lifestyle</option>
-                    <option value="Fashion & Retail">Fashion & Retail</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-gray-300 font-bold block mb-1">Budget (Zambian Kwacha K)</label>
-                  <input
-                    type="number"
-                    value={newBudget}
-                    onChange={(e) => setNewBudget(e.target.value)}
-                    className="w-full bg-[#182030] border border-[#2B3954] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#FFB800]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-gray-300 font-bold block mb-1">Deadline</label>
-                  <input
-                    type="text"
-                    value={newDeadline}
-                    onChange={(e) => setNewDeadline(e.target.value)}
-                    placeholder="e.g. 5 days left"
-                    className="w-full bg-[#182030] border border-[#2B3954] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#FFB800]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-300 font-bold block mb-1">Location / Target</label>
-                  <input
-                    type="text"
-                    value={newLocation}
-                    onChange={(e) => setNewLocation(e.target.value)}
-                    className="w-full bg-[#182030] border border-[#2B3954] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#FFB800]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-gray-300 font-bold block mb-1">Description & Requirements</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder="Explain what the video should cover, humor style, deliverables, product visibility..."
-                  className="w-full bg-[#182030] border border-[#2B3954] rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#FFB800] resize-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-[#FFB800] hover:bg-[#FFA500] text-black font-extrabold rounded-xl shadow-lg transition-all"
+            applications.map((app) => (
+              <div
+                key={app.id}
+                className="bg-[#121824] rounded-3xl border border-[#202C40] p-4 sm:p-5 space-y-3 shadow-md"
               >
-                Publish Campaign to Creators
-              </button>
-            </form>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={app.creatorAvatar}
+                      alt={app.creatorName}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[#FFB800]"
+                    />
+                    <div>
+                      <h4 className="text-xs font-extrabold text-white flex items-center gap-1">
+                        <span>{app.creatorName}</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#3B82F6]" />
+                      </h4>
+                      <p className="text-[10px] text-gray-400">
+                        Campaign: <strong className="text-gray-300">{app.opportunityTitle}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-sm font-black text-[#10B981] font-mono">
+                    K{app.proposedFee}
+                  </span>
+                </div>
+
+                {/* Pitch Details */}
+                <div className="p-3 rounded-2xl bg-[#0B0E14] border border-[#1E2638] text-xs text-gray-300 leading-relaxed">
+                  <p className="font-semibold text-gray-400 text-[10px] uppercase mb-1">
+                    Creative Pitch & Angle:
+                  </p>
+                  <p>{app.pitch}</p>
+                  {app.portfolioUrl && (
+                    <a
+                      href={app.portfolioUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-flex items-center space-x-1 text-[11px] text-[#3B82F6] hover:underline font-bold"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>View Sample Reel</span>
+                    </a>
+                  )}
+                </div>
+
+                {/* Actions & Status */}
+                <div className="pt-2 border-t border-[#1C2538] flex items-center justify-between">
+                  <span className="text-[11px] text-gray-400">
+                    Status: <strong className="text-[#FFB800] uppercase font-bold">{app.status}</strong>
+                  </span>
+
+                  <div className="flex items-center space-x-2">
+                    {app.status === 'pending' && (
+                      <button
+                        onClick={() => handleHire(app)}
+                        disabled={actionLoading === app.id}
+                        className="px-3.5 py-1.5 bg-[#FFB800] hover:bg-[#FFA500] text-black font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center space-x-1"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Hire & Lock Escrow (K{app.proposedFee})</span>
+                      </button>
+                    )}
+
+                    {app.status === 'accepted' && (
+                      <button
+                        onClick={() => handleComplete(app)}
+                        disabled={actionLoading === app.id}
+                        className="px-3.5 py-1.5 bg-[#10B981] hover:bg-[#059669] text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center space-x-1"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        <span>Approve Delivery & Release Payment</span>
+                      </button>
+                    )}
+
+                    {app.status === 'completed' && (
+                      <span className="text-xs font-bold text-[#10B981] flex items-center space-x-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Contract Paid Out</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       ) : (
@@ -375,7 +365,7 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
 
                   {/* Requirements Pills */}
                   <div className="flex flex-wrap gap-1.5">
-                    {opp.requirements.map((req, idx) => (
+                    {opp.requirements?.map((req, idx) => (
                       <span
                         key={idx}
                         className="bg-[#182132] text-gray-300 text-[10px] font-medium px-2 py-0.5 rounded-lg border border-[#26344E]"
@@ -389,7 +379,7 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
                   <div className="pt-3 border-t border-[#1C2538] flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-gray-400 font-bold block uppercase tracking-wider">
-                        Guaranteed Budget
+                        Guaranteed Escrow
                       </span>
                       <span className="text-base font-black text-[#FFB800]">
                         K{opp.budget}
@@ -412,7 +402,7 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
                         </span>
                       ) : (
                         <button
-                          onClick={() => setApplyingOpportunity(opp)}
+                          onClick={() => onApply(opp)}
                           className="px-4 py-2 bg-[#FFB800] hover:bg-[#FFA500] text-black font-extrabold text-xs rounded-xl shadow-md shadow-amber-500/20 active:scale-95 transition-all"
                         >
                           Apply Now
@@ -425,104 +415,6 @@ export const OpportunitiesScreen: React.FC<OpportunitiesScreenProps> = ({
             )}
           </div>
         </>
-      )}
-
-      {/* Application Pitch Modal */}
-      {applyingOpportunity && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#111723] border border-[#23314B] rounded-3xl p-5 w-full max-w-md space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1C2538] pb-3">
-              <div>
-                <span className="text-[10px] font-bold text-[#FFB800] uppercase tracking-wider">
-                  SUBMIT CREATOR APPLICATION
-                </span>
-                <h3 className="text-sm font-black text-white">{applyingOpportunity.title}</h3>
-                <p className="text-xs text-gray-400">Brand: {applyingOpportunity.businessName}</p>
-              </div>
-              <button
-                onClick={() => setApplyingOpportunity(null)}
-                className="w-7 h-7 rounded-full bg-[#182030] text-gray-400 hover:text-white flex items-center justify-center text-xs"
-              >
-                ✕
-              </button>
-            </div>
-
-            {submittedApp ? (
-              <div className="py-8 text-center space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-[#10B981] mx-auto animate-bounce" />
-                <h4 className="text-sm font-black text-white">Application Submitted!</h4>
-                <p className="text-xs text-gray-300">
-                  {applyingOpportunity.businessName} will review your portfolio. You'll receive a message upon approval!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-2xl bg-[#161F30] border border-[#24334E] flex items-center justify-between">
-                  <div>
-                    <span className="text-gray-400 text-[10px] block">Contract Value:</span>
-                    <strong className="text-[#FFB800] text-base font-black">
-                      K{applyingOpportunity.budget}
-                    </strong>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-gray-400 text-[10px] block">Turnaround:</span>
-                    <span className="text-white font-bold">{deliveryDays}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-gray-300 font-bold block mb-1">
-                    Your Pitch to {applyingOpportunity.businessName}
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={pitchText}
-                    onChange={(e) => setPitchText(e.target.value)}
-                    placeholder="Describe your comedy angle, previous video views, audio setup, and why you are the best fit..."
-                    className="w-full bg-[#182030] border border-[#2B3954] rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#FFB800] resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-300 font-bold block mb-1">
-                    Expected Delivery Time
-                  </label>
-                  <div className="flex gap-2">
-                    {['2 days', '3 days', '5 days'].map((days) => (
-                      <button
-                        key={days}
-                        type="button"
-                        onClick={() => setDeliveryDays(days)}
-                        className={`flex-1 py-1.5 rounded-lg font-bold text-xs border ${
-                          deliveryDays === days
-                            ? 'bg-[#FFB800] text-black border-[#FFB800]'
-                            : 'bg-[#182030] text-gray-300 border-[#2B3954]'
-                        }`}
-                      >
-                        {days}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-2 flex space-x-2">
-                  <button
-                    onClick={handleConfirmApply}
-                    className="flex-1 py-3 bg-[#FFB800] hover:bg-[#FFA500] text-black font-extrabold rounded-xl shadow-lg transition-all"
-                  >
-                    Submit Application (K{applyingOpportunity.budget})
-                  </button>
-                  <button
-                    onClick={() => setApplyingOpportunity(null)}
-                    className="py-3 px-4 bg-[#182030] text-gray-300 hover:text-white font-bold rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );

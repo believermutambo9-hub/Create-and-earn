@@ -1,4 +1,4 @@
-import { CreatorProfile, BusinessProfile, Project, Opportunity, Transaction, AppNotification } from '../types';
+import { CreatorProfile, BusinessProfile, Project, Opportunity, Transaction, AppNotification, Message } from '../types';
 
 export const INITIAL_CREATOR: CreatorProfile = {
   id: 'c-001',
@@ -17,6 +17,8 @@ export const INITIAL_CREATOR: CreatorProfile = {
   availableBalance: 1250,
   pendingBalance: 500,
   isVerified: true,
+  mobileMoneyNumber: '0979663914',
+  mobileMoneyProvider: 'Airtel Money Zambia',
   services: [
     {
       id: 'srv-1',
@@ -359,3 +361,44 @@ export const CREATOR_CATEGORIES = [
     subcategories: ['Day in Lusaka', 'Market Bargaining', 'OOTD Fashion Reveal', 'Morning Routine']
   }
 ];
+
+export const INITIAL_MESSAGES: Message[] = [
+  {
+    id: 'm-1',
+    senderId: 'b-101',
+    senderName: 'Hungry Lion Brand Lead',
+    senderAvatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80',
+    senderRole: 'business',
+    receiverId: 'creator-believer',
+    text: 'Hi Ace! We loved your "Just a Like" comedy concept and your high audience engagement in Lusaka. We would love for you to lead our new 8-piece Spicy Wing campaign.',
+    timestamp: '10:14 AM',
+    isRead: true,
+  },
+  {
+    id: 'm-2',
+    senderId: 'b-101',
+    senderName: 'Hungry Lion Brand Lead',
+    senderAvatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80',
+    senderRole: 'business',
+    receiverId: 'creator-believer',
+    text: 'Here is an official campaign contract offer:',
+    timestamp: '10:15 AM',
+    isOffer: true,
+    offerAmount: 500,
+    offerStatus: 'pending',
+    projectRef: 'Campaign: Funny Restaurant Skit',
+    isRead: true,
+  },
+  {
+    id: 'm-3',
+    senderId: 'c-001',
+    senderName: 'Ace Believer',
+    senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    senderRole: 'creator',
+    receiverId: 'b-101',
+    text: 'Hello team! That sounds incredible. I have already generated the scene-by-scene script with camera shots on CREATE & EARN. We can start filming tomorrow!',
+    timestamp: '10:22 AM',
+    isRead: true,
+  },
+];
+

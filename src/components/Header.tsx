@@ -14,6 +14,8 @@ interface HeaderProps {
   onChangeRole: (role: Role) => void;
   isDeviceFrame: boolean;
   onToggleDeviceFrame: () => void;
+  isLoggedIn?: boolean;
+  onOpenAuth?: (mode?: 'signin' | 'signup') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,6 +30,8 @@ export const Header: React.FC<HeaderProps> = ({
   onChangeRole,
   isDeviceFrame,
   onToggleDeviceFrame,
+  isLoggedIn,
+  onOpenAuth,
 }) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -185,18 +189,28 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* User Avatar */}
-          <div
-            onClick={() => onNavigate('profile')}
-            className="relative cursor-pointer group"
-          >
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-9 h-9 rounded-full object-cover border-2 border-[#FFB800] group-hover:scale-105 transition-transform"
-            />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#10B981] border-2 border-[#0B0E14]"></span>
-          </div>
+          {/* User Avatar or Sign In */}
+          {!isLoggedIn ? (
+            <button
+              onClick={() => onOpenAuth?.('signin')}
+              className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#FFB800] to-[#FFA000] text-black font-extrabold text-xs shadow-sm hover:scale-105 active:scale-95 transition-all"
+            >
+              Sign In
+            </button>
+          ) : (
+            <div
+              onClick={() => onNavigate('profile')}
+              className="relative cursor-pointer group"
+              title={`${user.name} (${user.role || 'creator'})`}
+            >
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-[#FFB800] group-hover:scale-105 transition-transform"
+              />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#10B981] border-2 border-[#0B0E14]"></span>
+            </div>
+          )}
         </div>
       </div>
     </header>

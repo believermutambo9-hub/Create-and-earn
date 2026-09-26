@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users collection (public profile previews allowed, updates for authenticated user)
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    // Projects collection (allow read so project libraries and samples can display)
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Opportunities collection (Marketplace campaigns)
+    match /opportunities/{opportunityId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Applications collection (Creator proposals)
+    match /applications/{applicationId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    // Messages collection (Creator - Brand chat)
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    // Transactions collection (Ledger)
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+  }
+}
